@@ -2,14 +2,23 @@ import express from "express";
 import cors from "cors";
 import listEndpoints from "express-list-endpoints";
 import mongoose from "mongoose";
+import { createServer } from "http";
+import { Server } from "socket.io";
+import { newConnectionHandler } from "./socket/index.js";
 
-const server = express();
+const expressServer = express();
 
 const port = process.env.PORT || 3001;
 
+//***************SOCKET IO ********************* */
+const httpServer = createServer(expressServer);
+const io = new Server(httpServer);
+
+io.on("connection", newConnectionHandler);
+
 //***************MIDDLEWARES***************** */
-server.use(express.json());
-server.use(cors());
+expressServer.use(express.json());
+expressServer.use(cors());
 
 //***************ENDPOINTS******************* */
 
@@ -18,8 +27,8 @@ server.use(cors());
 mongoose.connect(process.env.MONGO_URL);
 
 mongoose.connection.on("connected", () => {
-  server.listen(port, () => {
-    console.table(listEndpoints(server));
+  httpServer.listen(port, () => {
+    console.table(listEndpoints(expressServer));
     console.log(`Server is running on ${port}`);
   });
 });
